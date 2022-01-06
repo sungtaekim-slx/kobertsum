@@ -2,7 +2,6 @@
 
 # KoBertSum
 
-test
 
 ## 모델 소개
 
@@ -10,22 +9,20 @@ test
 
 KoBERTSUM은 ext 및 abs summarizatoin 분야에서 우수한 성능을 보여주고 있는 [BertSum모델](https://github.com/nlpyang/PreSumm)을 한국어 데이터에 적용할 수 있도록 수정한 한국어 요약 모델입니다.
 
-현재는
+해당 코드는 BertSum 모델을 한국어로 개선한 KoBertSum 코드를 변경하여 사용하기 수월하게 만들고 있습니다.
 
-- Pre-trained BERT로 [KoBERT](https://github.com/SKTBrain/KoBERT)를 이용합니다. 원활한 연결을 위해 [Transformers(](https://github.com/monologg/KoBERT-Transformers)[monologg](https://github.com/monologg/KoBERT-Transformers)[)](https://github.com/monologg/KoBERT-Transformers)를 통해 Huggingface transformers 라이브러리를 사용합니다.
+##### 개선사항
+- huggingface models에서 모델을 불러오거나, 로컬에 저장된 모델을 실행 시 인자로 주어 다양한 모델의 적용 및 실험 가용성을 향상시킬 예정입니다.
+- 코드 내 커맨드 실행 부분으로 인해 코드 흐름에 방해가 되거나, 파악되지 않는 부분들을 개선할 예정입니다.(os.system()등의 사용으로 인해 디버깅의 어려움)
+- 적용되고 있는 huggingface transformers버전이 4미만일 경우 적용되지 않는 부분들을 개선할 예정입니다.
+
+- KoBertSum 원코드: https://github.com/uoneway/KoBertSum
+
+현재는
 
 - 이용 Data로 한국어 문서 추출요약 AI 경진대회(~ 2020.12.09)에서 사용된 [Bflysoft-뉴스기사 데이터셋](https://dacon.io/competitions/official/235671/data/)에 맞춰져 있습니다.
 
 - `BertSumExt`모델만 지원합니다.
-
-  
-
-업데이트 계획은 다음과 같습니다.
-
-- [ ] 다양한 데이터를 받아들일 수 있도록 수정
-- [ ] `BertSumAbs` 및 `BertSumExtAbs` 요약모델 추가 지원
-- [ ] Pre-trained BERT로 [KoBERT ](https://github.com/SKTBrain/KoBERT)외 타 모델 지원(Huggingface transformers 라이브러리 지원 모델 위주)
-
 
 
 ### BertSum이란?
