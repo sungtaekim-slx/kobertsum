@@ -190,6 +190,12 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
+def createFolder(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print ('Error: Creating directory. ' +  directory)
 def make_data(args):
     os.makedirs(args.data_path, exist_ok=True)
     os.makedirs(args.log_path, exist_ok=True)
@@ -231,7 +237,7 @@ def make_data(args):
 # python make_data.py -make bert -by abs
 # Make bert input file for train and valid from df file
     
-
+    save_path = args.save_path
     for data_type in ['train', 'valid', 'test']:
         df = pd.read_pickle(f"{args.data_path}/{data_type}_df.pickle")
 
@@ -247,6 +253,7 @@ def make_data(args):
         
         ## Convert json to bert.pt files
         bert_data_dir = f"{args.data_path}/{data_type}"
+        # createFolder(bert_data_dir)
         if os.path.exists(bert_data_dir):
             os.system(f"rm {bert_data_dir}/*")
         else:
@@ -256,7 +263,9 @@ def make_data(args):
         
         args.dataset= data_type
         args.raw_path = json_data_dir
-        args.save_path = bert_data_dir
+        
+        args.save_path =  f"{save_path}/{data_type}"
+        createFolder(args.save_path)
         init_logger(args.log_path+"/"+args.log_file_name)
         eval('data_builder.format_to_bert(args)')
         # os.system(f"python preprocess.py"

@@ -1,6 +1,5 @@
 import copy
-# import sys
-# sys.path.append("./src")
+
 import torch
 import torch.nn as nn
 from transformers import AutoModel, AutoConfig
@@ -114,12 +113,12 @@ def get_generator(vocab_size, dec_hidden_size, device):
     return generator
 
 class Bert(nn.Module):
-    def __init__(self, large, temp_dir, finetune=False):
+    def __init__(self, model_path, large, temp_dir, finetune=False):
         super(Bert, self).__init__()
         # if(large):
 #         self.model = BertModel.from_pretrained('bert-large-uncased', cache_dir=temp_dir)
         # else:
-        self.model = AutoModel.from_pretrained("monologg/koelectra-small-v3-discriminator", cache_dir=temp_dir)
+        self.model = AutoModel.from_pretrained(model_path, cache_dir=temp_dir)
         self.finetune = finetune
     def forward(self, x, segs, mask):
         if(self.finetune):
@@ -138,7 +137,7 @@ class ExtSummarizer(nn.Module):
         super(ExtSummarizer, self).__init__()
         self.args = args
         self.device = device
-        self.bert = Bert(args.large, args.temp_dir, args.finetune_bert)
+        self.bert = Bert(args.model_path, args.large, args.temp_dir, args.finetune_bert)
 
         self.ext_layer = ExtTransformerEncoder(self.bert.model.config.hidden_size, args.ext_ff_size, args.ext_heads,
                                                args.ext_dropout, args.ext_layers)
