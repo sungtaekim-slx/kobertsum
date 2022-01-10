@@ -11,20 +11,23 @@ from tqdm import tqdm
 import argparse
 import pickle
 
+import argparse
+import time
+
+from others.logging import init_logger
+from prepro import data_builder
+
 import os
 os.environ['MKL_THREADING_LAYER'] = 'GNU'
-PROBLEM = 'ext'
 
 ## 사용할 path 정의
 # PROJECT_DIR = '/home/uoneway/Project/PreSumm_ko'
-PROJECT_DIR = '..'
-
-DATA_DIR = f'{PROJECT_DIR}/{PROBLEM}/data'
-RAW_DATA_DIR = DATA_DIR + '/raw'
-JSON_DATA_DIR = DATA_DIR + '/json_data'
-BERT_DATA_DIR = DATA_DIR + '/bert_data' 
-LOG_DIR = f'{PROJECT_DIR}/{PROBLEM}/logs'
-LOG_PREPO_FILE = LOG_DIR + '/preprocessing.log' 
+# DATA_DIR = f'{PROJECT_DIR}/{PROBLEM}/data'
+# RAW_DATA_DIR = DATA_DIR + '/raw'
+# JSON_DATA_DIR = DATA_DIR + '/json_data'
+# BERT_DATA_DIR = DATA_DIR + '/bert_data' 
+LOG_DIR = '../logs'
+# LOG_PREPO_FILE = LOG_DIR + '/preprocessing.log' 
 
 
 # special_symbols_in_dict = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-']
@@ -173,121 +176,128 @@ def create_json_files(df, data_type='train', target_summary_sent=None, path=''):
         with open(file_name, 'w') as json_file:
             json_file.write(json_string)
 
+def do_format_to_model(args):
+    print(time.clock())
+    data_builder.format_to_bert(args)
+    print(time.clock())
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-task", default=None, type=str, choices=['df', 'train_bert', 'test_bert'])
-    parser.add_argument("-target_summary_sent", default='abs', type=str)
-    parser.add_argument("-n_cpus", default='2', type=str)
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
-    args = parser.parse_args()
+def make_data(args):
+    os.makedirs(args.data_path, exist_ok=True)
+    os.makedirs(args.log_path, exist_ok=True)
+    # import data
+    with open(f'{args.data_path}/{args.train_data_name}', 'r') as json_file:
+        train_json_list = list(json_file)
+    with open(f'{args.data_path}/{args.test_data_name}', 'r') as json_file:
+        test_json_list = list(json_file)
 
-    # python make_data.py -make df
+    trains = []
+    for json_str in train_json_list:
+        line = json.loads(json_str)
+        trains.append(line)
+    tests = []
+    for json_str in test_json_list:
+        line = json.loads(json_str)
+        tests.append(line)
+
     # Convert raw data to df
-    if args.task == 'df': # and valid_df
-        os.makedirs(DATA_DIR, exist_ok=True)
-        os.makedirs(RAW_DATA_DIR, exist_ok=True)
+    df = pd.DataFrame(trains)
+    df['extractive_sents'] = df.apply(lambda row: list(np.array(row['article_original'])[row['extractive']]) , axis=1)
 
-        # import data
-        with open(f'{RAW_DATA_DIR}/train.jsonl', 'r') as json_file:
-            train_json_list = list(json_file)
-        with open(f'{RAW_DATA_DIR}/extractive_test_v2.jsonl', 'r') as json_file:
-            test_json_list = list(json_file)
+    # random split
+    train_df = df.sample(frac=0.95,random_state=42) #random state is a seed value
+    valid_df = df.drop(train_df.index)
+    train_df.reset_index(inplace=True, drop=True)
+    valid_df.reset_index(inplace=True, drop=True)
 
-        trains = []
-        for json_str in train_json_list:
-            line = json.loads(json_str)
-            trains.append(line)
-        tests = []
-        for json_str in test_json_list:
-            line = json.loads(json_str)
-            tests.append(line)
+    test_df = pd.DataFrame(tests)
 
-        # Convert raw data to df
-        df = pd.DataFrame(trains)
-        df['extractive_sents'] = df.apply(lambda row: list(np.array(row['article_original'])[row['extractive']]) , axis=1)
+    # save df
+    train_df.to_pickle(f"{args.data_path}/train_df.pickle")
+    valid_df.to_pickle(f"{args.data_path}/valid_df.pickle")
+    test_df.to_pickle(f"{args.data_path}/test_df.pickle")
+    print(f'train_df({len(train_df)}) is exported')
+    print(f'valid_df({len(valid_df)}) is exported')
+    print(f'test_df({len(test_df)}) is exported')
+    
+# python make_data.py -make bert -by abs
+# Make bert input file for train and valid from df file
+    
 
-        # random split
-        train_df = df.sample(frac=0.95,random_state=42) #random state is a seed value
-        valid_df = df.drop(train_df.index)
-        train_df.reset_index(inplace=True, drop=True)
-        valid_df.reset_index(inplace=True, drop=True)
-
-        test_df = pd.DataFrame(tests)
-
-        # save df
-        train_df.to_pickle(f"{RAW_DATA_DIR}/train_df.pickle")
-        valid_df.to_pickle(f"{RAW_DATA_DIR}/valid_df.pickle")
-        test_df.to_pickle(f"{RAW_DATA_DIR}/test_df.pickle")
-        print(f'train_df({len(train_df)}) is exported')
-        print(f'valid_df({len(valid_df)}) is exported')
-        print(f'test_df({len(test_df)}) is exported')
-        
-    # python make_data.py -make bert -by abs
-    # Make bert input file for train and valid from df file
-    elif args.task  == 'train_bert':
-        os.makedirs(JSON_DATA_DIR, exist_ok=True)
-        os.makedirs(BERT_DATA_DIR, exist_ok=True)
-        os.makedirs(LOG_DIR, exist_ok=True)
-
-        for data_type in ['train', 'valid']:
-            df = pd.read_pickle(f"{RAW_DATA_DIR}/{data_type}_df.pickle")
-
-            ## make json file
-            # 동일한 파일명 존재하면 덮어쓰는게 아니라 ignore됨에 따라 폴더 내 삭제 후 만들어주기
-            json_data_dir = f"{JSON_DATA_DIR}/{data_type}_{args.target_summary_sent}"
-            if os.path.exists(json_data_dir):
-                os.system(f"rm {json_data_dir}/*")
-            else:
-                os.mkdir(json_data_dir)
-
-            create_json_files(df, data_type=data_type, target_summary_sent=args.target_summary_sent, path=JSON_DATA_DIR)
-           
-            ## Convert json to bert.pt files
-            bert_data_dir = f"{BERT_DATA_DIR}/{data_type}_{args.target_summary_sent}"
-            if os.path.exists(bert_data_dir):
-                os.system(f"rm {bert_data_dir}/*")
-            else:
-                os.mkdir(bert_data_dir)
-            
-            os.system(f"python preprocess.py"
-                + f" -mode format_to_bert -dataset {data_type}"
-                + f" -raw_path {json_data_dir}"
-                + f" -save_path {bert_data_dir}"
-                + f" -log_file {LOG_PREPO_FILE}"
-                + f" -lower -n_cpus {args.n_cpus}")
-
-
-    # python make_data.py -task test_bert
-    # Make bert input file for test from df file
-    elif args.task  == 'test_bert':
-        os.makedirs(JSON_DATA_DIR, exist_ok=True)
-        os.makedirs(BERT_DATA_DIR, exist_ok=True)
-        os.makedirs(LOG_DIR, exist_ok=True)
-
-        test_df = pd.read_pickle(f"{RAW_DATA_DIR}/test_df.pickle")
+    for data_type in ['train', 'valid', 'test']:
+        df = pd.read_pickle(f"{args.data_path}/{data_type}_df.pickle")
 
         ## make json file
         # 동일한 파일명 존재하면 덮어쓰는게 아니라 ignore됨에 따라 폴더 내 삭제 후 만들어주기
-        json_data_dir = f"{JSON_DATA_DIR}/test"
+        json_data_dir = f"{args.data_path}/{data_type}"
         if os.path.exists(json_data_dir):
             os.system(f"rm {json_data_dir}/*")
         else:
             os.mkdir(json_data_dir)
 
-        create_json_files(test_df, data_type='test', path=JSON_DATA_DIR)
+        
         
         ## Convert json to bert.pt files
-        bert_data_dir = f"{BERT_DATA_DIR}/test"
+        bert_data_dir = f"{args.data_path}/{data_type}"
         if os.path.exists(bert_data_dir):
             os.system(f"rm {bert_data_dir}/*")
         else:
             os.mkdir(bert_data_dir)
+
+        create_json_files(df, data_type=data_type, path=args.data_path)
         
-        os.system(f"python preprocess.py"
-            + f" -mode format_to_bert -dataset test"
-            + f" -raw_path {json_data_dir}"
-            + f" -save_path {bert_data_dir}"
-            + f" -log_file {LOG_PREPO_FILE}"
-            + f" -lower -n_cpus {args.n_cpus}")
+        args.dataset= data_type
+        args.raw_path = json_data_dir
+        args.save_path = bert_data_dir
+        init_logger(args.log_path+"/"+args.log_file_name)
+        eval('data_builder.format_to_bert(args)')
+        # os.system(f"python preprocess.py"
+        #     + f" -mode format_to_bert -dataset {data_type}"
+        #     + f" -raw_path {json_data_dir}"
+        #     + f" -save_path {bert_data_dir}"
+        #     + f" -log_file {args.log_path}/{args.log_file_name}"
+        #     + f" -lower -n_cpus {args.n_cpus}")
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-model_path", default='monologg/koelectra-small-v3-discriminator', type=str)
+    parser.add_argument("-target_summary_sent", default='ext', type=str)
+    parser.add_argument("-n_cpus", default='2', type=int)
+    parser.add_argument("-select_mode", default='greedy', type=str)
+    parser.add_argument("-data_path", default='../data', type=str)
+    parser.add_argument("-train_data_name", default='train.jsonl', type=str)
+    parser.add_argument("-test_data_name", default='test.jsonl', type=str)
+    parser.add_argument("-raw_path", default='../../line_data', type=str)
+    parser.add_argument("-save_path", default='../../data/', type=str)
+    parser.add_argument('-log_path', default='../logs', type=str)
+    parser.add_argument('-log_file_name', default='preprocessing.log', type=str) 
+
+    parser.add_argument("-shard_size", default=2000, type=int)
+    parser.add_argument('-min_src_nsents', default=1, type=int)    # 3
+    parser.add_argument('-max_src_nsents', default=120, type=int)    # 100
+    parser.add_argument('-min_src_ntokens_per_sent', default=1, type=int)    # 5
+    parser.add_argument('-max_src_ntokens_per_sent', default=300, type=int)    # 200
+    parser.add_argument('-min_tgt_ntokens', default=1, type=int)    # 5
+    parser.add_argument('-max_tgt_ntokens', default=500, type=int)    # 500
+
+    parser.add_argument("-lower", type=str2bool, nargs='?',const=True,default=True)
+    parser.add_argument("-use_bert_basic_tokenizer", type=str2bool, nargs='?',const=True,default=False)
+
+   
+
+    parser.add_argument('-dataset', default='')
+
+
+    args = parser.parse_args()
+    
+    make_data(args)
+    

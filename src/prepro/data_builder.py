@@ -17,6 +17,7 @@ from others.logging import logger
 # from others.tokenization import BertTokenizer
 from prepro.tokenization_kobert import KoBertTokenizer
 from transformers import XLNetTokenizer
+from transformers import AutoTokenizer
 
 from others.utils import clean
 from prepro.utils import _get_word_ngrams
@@ -302,7 +303,9 @@ class BertData():
 
     def __init__(self, args):
         self.args = args
-        self.tokenizer = KoBertTokenizer.from_pretrained("monologg/kobert", do_lower_case=True)
+
+        # self.tokenizer = KoBertTokenizer.from_pretrained("monologg/kobert", do_lower_case=True)
+        self.tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator", do_lower_case=True)
 
         self.sep_token = '[SEP]'
         self.cls_token = '[CLS]'
@@ -310,9 +313,9 @@ class BertData():
         self.tgt_bos = '¶' # '[unused0]'   204; 314[ 315]
         self.tgt_eos = '----------------' # '[unused1]'
         self.tgt_sent_split = ';' #'[unused2]'
-        self.sep_vid = self.tokenizer.token2idx[self.sep_token]
-        self.cls_vid = self.tokenizer.token2idx[self.cls_token]
-        self.pad_vid = self.tokenizer.token2idx[self.pad_token]
+        self.sep_vid = self.tokenizer.sep_token_id
+        self.cls_vid = self.tokenizer.cls_token_id
+        self.pad_vid = self.tokenizer.pad_token_id
 
     def preprocess(self, src, tgt, sent_labels, use_bert_basic_tokenizer=False, is_test=False):
 
@@ -403,9 +406,9 @@ def format_to_bert(args):
 def _format_to_bert(params):
     corpus_type, json_file, args, save_file = params
     is_test = corpus_type == 'test'
-    if (os.path.exists(save_file)):
-        logger.info('Ignore %s' % save_file)
-        return
+    # if (os.path.exists(save_file)):
+    #     logger.info('Ignore %s' % save_file)
+    #     return
 
     bert = BertData(args)
     logger.info('Processing %s' % json_file)
