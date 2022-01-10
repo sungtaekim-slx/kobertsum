@@ -58,7 +58,7 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
    - `n_cpus`: 연산에 이용할 CPU 수
 
     ```
-    python main.py -task make_data -n_cpus 2
+    python preprocess_data.py -model_path monologg/kobert -n_cpus 2 -data_path ../ext/data -save_path ../data
     ```
    
    결과는 `ext/data/bert_data/train_abs` 및  `ext/data/bert_data/valid_abs` 에 저장됩니다.
@@ -72,7 +72,21 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
       예) (GPU 3개를 이용할 경우): `0,1,2`
 
     ```
-    python main.py -task train -target_summary_sent abs -visible_gpus 0
+    python train_function.py \
+	-mode train \
+	-model_path monologg/kobert \
+	-data_path ../data/train \
+	-save_checkpoint_steps 1000 \
+	-visible_gpus 0 \
+	-report_every 50 \
+	-ext_dropout 0.1 \
+	-max_pos 512 \
+	-lr 2e-3 \
+	-warmup_steps 10000 \
+	-batch_size 3000 \
+	-accum_count 2 \
+	-train_steps 50000 \
+	-use_interval true
     ```
 
     결과는  `models` 폴더 내 finetuning이 실행된 시간을 폴더명으로 가진 폴더에 저장됩니다. 
