@@ -58,7 +58,7 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
    - `n_cpus`: 연산에 이용할 CPU 수
 
     ```
-    python preprocess_data.py -model_path monologg/kobert -n_cpus 2 -data_path ./sample -save_path ./data
+    python preprocess_data.py -model_path monologg/kobert -n_cpus 2 -data_path ./sample_data -save_path ./data
     ```
    
    결과는 `ext/data/bert_data/train_abs` 및  `ext/data/bert_data/valid_abs` 에 저장됩니다.
@@ -75,7 +75,7 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
     python train_function.py \
 	-mode train \
 	-model_path monologg/kobert \
-	-data_path ./sample/train \
+	-data_path ./data/train \
 	-save_checkpoint_steps 1000 \
 	-visible_gpus 0 \
 	-report_every 50 \
