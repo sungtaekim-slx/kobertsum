@@ -107,7 +107,7 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
     -report_rouge False -max_tgt_len 100
    ```
 
-   결과는 `ext/logs` 폴더 내 `valid_1209_1236.log` 형태로 저장됩니다.
+   결과는 `logs` 폴더 내 `valid_날짜.log` 형태로 저장됩니다.
 
 4. test(수정 예정)
 
