@@ -46,7 +46,7 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
 1. 필요 라이브러리 설치
 
     ```
-    python main.py -task install
+    sh install.sh
     ```
 
 ## Usage
