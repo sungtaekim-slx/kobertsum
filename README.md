@@ -58,7 +58,7 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
    - `n_cpus`: 연산에 이용할 CPU 수
 
     ```
-    python preprocess_data.py -model_path monologg/kobert -n_cpus 2 -data_path ./sample_data -save_path ./data
+    python preprocess_data.py -model_path monologg/koelectra-base-v3-discriminator -n_cpus 2 -data_path ./sample_data -save_path ./data
     ```
    
    결과는 `ext/data/bert_data/train_abs` 및  `ext/data/bert_data/valid_abs` 에 저장됩니다.
@@ -72,22 +72,15 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
       예) (GPU 3개를 이용할 경우): `0,1,2`
 
     ```
-    python train_function.py \
-	-mode train \
-	-model_path monologg/kobert \
-	-save_path mymodel \
-	-data_path ./data/train \
-	-save_checkpoint_steps 1000 \
-	-visible_gpus 0 \
-	-report_every 50 \
-	-ext_dropout 0.1 \
-	-max_pos 512 \
-	-lr 2e-3 \
-	-warmup_steps 10000 \
-	-batch_size 3000 \
-	-accum_count 2 \
-	-train_steps 50000 \
-	-use_interval true
+    python main_function.py -mode train \
+ -model_path monologg/koelectra-base-v3-discriminator \
+ -save_path mymodel \
+ -data_path ./data \
+ -save_checkpoint_steps 50 \
+ -visible_gpus 0 -report_every 50 \
+ -ext_dropout 0.1 -max_pos 512 -lr 2e-3 -warmup_steps 100 \
+ -batch_size 3000 -accum_count 2 \
+ -train_steps 100  -use_interval true
     ```
 
     결과는  `mymodel` 폴더 내 finetuning이 실행된 시간을 폴더명으로 가진 폴더에 저장됩니다. 
@@ -99,21 +92,55 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
    - `model_path`:  model 파일(`.pt`)이 저장된 폴더 경로
 
    ```
-   python main.py -task valid -model_path 1209_1236
+   python main_function.py -mode valid \
+ -test_all True \
+ -model_path mymodel \
+ -model_pt model_step_100.pt \
+ -data_path ./data \
+ -result_path ./result \
+ -log_dir ./logs \
+ -test_batch_size 100  -batch_size 3000 \
+ -sep_optim true \
+ -use_interval true \
+ -visible_gpus 0 -max_pos 512 -max_length 200 \
+ -alpha 0.95 -min_length 50 \
+ -report_rouge False -max_tgt_len 100
    ```
 
    결과는 `ext/logs` 폴더 내 `valid_1209_1236.log` 형태로 저장됩니다.
 
-4. Inference & make submission file
+4. test(수정 예정)
 
-    Validation을 통해 확인한 가장 성능이 우수한 model파일을 통해 실제로 텍스트 요약 과업을 수행합니다.
+    test 통해 candidate 파일을 생성합니다.
 
     - `test_from`:  model 파일(`.pt`) 경로
     - `visible_gpus`: 연산에 이용할 gpu index를 입력. 
       예) (GPU 3개를 이용할 경우): `0,1,2`
 
     ```
-    python main.py -task test -test_from 1209_1236/model_step_7000.pt -visible_gpus 0
+    python main_function.py -mode test \
+ -test_from mymodel/model_step_100.pt \
+ -data_path ./data \
+ -result_path ./result \
+ -log_dir ./logs -test_batch_size 1 -batch_size 3000 \
+ -sep_optim true -use_interval true \
+ -visible_gpus 0 -max_pos 512 -max_length 200 \
+ -alpha 0.95 -min_length 50 \
+ -report_rouge False \
+ -max_tgt_len 100
     ```
 
-    결과는 `ext/data/results/` 폴더에 `result_1209_1236_step_7000.candidate`  및 `submission_날짜_시간.csv` 형태로 저장됩니다.
+5. Inference & make submission file
+
+    Validation을 통해 확인한 가장 성능이 우수한 model파일을 통해 실제로 텍스트 요약 과업을 수행합니다.
+
+    - `input_file`:  입력 test 파일
+    - `candidate_file`: test mode를 통해 생성된 candidate 경로. 
+    - `output_path`: 출력폴더.
+    - `output_csv`: 출력파일.
+
+    ```
+    python Inference.py -input_file ./sample_data/test.jsonl -candidate_file ./result/test_step_100.candidate -output_path ./output -output_csv output.csv
+    ```
+
+    결과는 `./result` 폴더에 `test_step_100.candidate`를 토대로 ./output폴더 내에 `output.csv` 형태를 생성합니다.

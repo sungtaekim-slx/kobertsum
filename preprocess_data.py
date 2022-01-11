@@ -135,7 +135,7 @@ def korean_sent_spliter(doc):
         return sents_splited
 
 
-def create_json_files(df, data_type='train', target_summary_sent=None, path=''):
+def create_json_files(df, data_type='train', target_summary_sent="ext", path=''):
     NUM_DOCS_IN_ONE_FILE = 1000
     start_idx_list = list(range(0, len(df), NUM_DOCS_IN_ONE_FILE))
 
@@ -149,9 +149,9 @@ def create_json_files(df, data_type='train', target_summary_sent=None, path=''):
         start_idx_str = (length - len(str(start_idx)))*'0' + str(start_idx)
         end_idx_str = (length - len(str(end_idx-1)))*'0' + str(end_idx-1)
 
-        file_name = os.path.join(f'{path}/{data_type}_{target_summary_sent}' \
+        file_name = os.path.join(f'{path}' \
                                 + f'/{data_type}.{start_idx_str}_{end_idx_str}.json') if target_summary_sent is not None \
-                    else os.path.join(f'{path}/{data_type}' \
+                    else os.path.join(f'{path}' \
                                 + f'/{data_type}.{start_idx_str}_{end_idx_str}.json')
         
         json_list = []
@@ -160,11 +160,9 @@ def create_json_files(df, data_type='train', target_summary_sent=None, path=''):
                                     for original_sent in row['article_original']]
 
             summary_sents_list = []
-            if target_summary_sent is not None:
-                if target_summary_sent == 'ext':
-                    summary_sents = row['extractive_sents']
-                elif target_summary_sent == 'abs':
-                    summary_sents = korean_sent_spliter(row['abstractive'])   
+            # if target_summary_sent is not None:
+            if data_type == 'train' or data_type == "valid":
+                summary_sents = row['extractive_sents']
                 summary_sents_list = [preprocessing(original_sent).split() # , korean_tokenizer
                                         for original_sent in summary_sents]
 
@@ -224,7 +222,8 @@ def make_data(args):
     # Convert raw data to df
     df = pd.DataFrame(trains)
     df['extractive_sents'] = df.apply(lambda row: list(np.array(row['article_original'])[row['extractive']]) , axis=1)
-
+    
+    
     # random split
     train_df = df.sample(frac=0.95,random_state=42) #random state is a seed value
     valid_df = df.drop(train_df.index)
@@ -247,31 +246,24 @@ def make_data(args):
     
     for data_type in ['train', 'valid', 'test']:
         df = pd.read_pickle(f"{save_path}/{data_type}_df.pickle")
-
         ## make json file
         # 동일한 파일명 존재하면 덮어쓰는게 아니라 ignore됨에 따라 폴더 내 삭제 후 만들어주기
-        json_data_dir = f"{save_path}/{data_type}"
-        if os.path.exists(json_data_dir):
-            os.system(f"rm {json_data_dir}/*")
-        else:
-            os.mkdir(json_data_dir)
+        json_data_dir = f"{save_path}"
+        createFolder(json_data_dir)
 
         
         
         ## Convert json to bert.pt files
-        bert_data_dir = f"{save_path}/{data_type}"
+        bert_data_dir = f"{save_path}"
         # createFolder(bert_data_dir)
-        if os.path.exists(bert_data_dir):
-            os.system(f"rm {bert_data_dir}/*")
-        else:
-            os.mkdir(bert_data_dir)
+        createFolder(bert_data_dir)
 
         create_json_files(df, data_type=data_type, path=save_path)
         
         args.dataset= data_type
         args.raw_path = json_data_dir
         
-        args.save_path =  f"{save_path}/{data_type}"
+        args.save_path =  f"{save_path}"
         # createFolder(args.save_path)
         init_logger(args.log_path+"/"+args.log_file_name)
     # os.chdir('./src')    

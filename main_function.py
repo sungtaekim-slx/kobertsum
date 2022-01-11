@@ -10,6 +10,7 @@ sys.path.append("./src")
 from others.logging import init_logger
 #from train_abstractive import validate_abs, train_abs, baseline, test_abs, test_text_abs
 from train_extractive import train_ext, validate_ext, test_ext
+from datetime import datetime
 
 model_flags = ['hidden_size', 'ff_size', 'heads', 'emb_size', 'enc_layers', 'enc_hidden_size', 'enc_ff_size',
                'dec_layers', 'dec_hidden_size', 'dec_ff_size', 'encoder', 'ff_actv', 'use_interval']
@@ -35,10 +36,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-task", default='ext', type=str, choices=['ext', 'abs'])
     parser.add_argument("-encoder", default='bert', type=str, choices=['bert', 'baseline'])
-    parser.add_argument("-mode", default='train', type=str, choices=['train', 'validate', 'test'])
+    parser.add_argument("-mode", default='train', type=str, choices=['train', 'valid', 'test'])
     parser.add_argument("-data_path", default='./data')
     parser.add_argument("-bert_data_path", default='./bert_data_new/cnndm')
     parser.add_argument("-model_path", default='monologg/kobert')
+    parser.add_argument("-model_pt", default='model_step_100.pt')
     parser.add_argument("-save_path", default='./models/')
     parser.add_argument("-result_path", default='./results/cnndm')
     parser.add_argument("-temp_dir", default='./temp')
@@ -103,7 +105,8 @@ if __name__ == '__main__':
     parser.add_argument("-recall_eval", type=str2bool, nargs='?',const=True,default=False)
 
     parser.add_argument('-gpu_ranks', default='0', type=str)
-    parser.add_argument('-log_file', default='./logs/train.log')
+    parser.add_argument('-log_dir', default='./logs', type=str)
+    parser.add_argument('-log_file', default='./logs/train.log', type=str)
     parser.add_argument('-seed', default=666, type=int)
 
     parser.add_argument("-test_all", type=str2bool, nargs='?',const=True,default=False)
@@ -120,20 +123,23 @@ if __name__ == '__main__':
     # args.bert_data_path = "../"+args.data_path
     # args.result_path = "../"+args.result_path
     # args.temp_dir = "../"+args.temp_dir
-    # args.log_file = "../"+args.log_file
+    current_time = datetime.today().strftime("%Y%m%d")
+    args.log_file = os.path.join(args.log_dir, args.mode+"_"+current_time+".log")
     
     args.world_size = len(args.gpu_ranks)
     os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_gpus
 
-    init_logger(args.log_file)
+    
     device = "cpu" if args.visible_gpus == '-1' else "cuda"
     device_id = 0 if device == "cuda" else -1
 
-    log_dir = ''.join(str(args.log_file).split("/")[:-1])
+    log_dir = args.log_dir
     print("log_dir : ", log_dir)
+    
     createFolder(log_dir)
     f_log = open(args.log_file, 'w', encoding="utf-8")
     f_log.close()
+    init_logger(args.log_file)
     # if (args.task == 'abs'):
     #     if (args.mode == 'train'):
     #         train_abs(args, device_id)
@@ -161,9 +167,15 @@ if __name__ == '__main__':
     # elif (args.task == 'ext'):
     if (args.mode == 'train'):
         train_ext(args, device_id)
-    elif (args.mode == 'validate'):
+    elif (args.mode == 'valid'):
+        createFolder(args.result_path)
+        args.save_path = args.model_path
         validate_ext(args, device_id)
     elif(args.mode == 'test'):
+        createFolder(args.result_path)
+        args.model_path = ''.join(args.test_from.split("/")[:-1])
+        args.save_path = args.model_path
+        
         cp = args.test_from
         try:
             step = int(cp.split('.')[-2].split('_')[-1])

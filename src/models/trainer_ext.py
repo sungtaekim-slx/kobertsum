@@ -42,7 +42,7 @@ def build_trainer(args, device_id, model, optim):
 
     # tensorboard_log_dir = args.model_path
     tensorboard_log_dir = args.save_path
-
+    
     writer = SummaryWriter(tensorboard_log_dir, comment="Unmt")
 
     report_manager = ReportMgr(args.report_every, start_time=-1, tensorboard_writer=writer)
@@ -228,8 +228,8 @@ class Trainer(object):
             self.model.eval()
         stats = Statistics()
 
-        can_path = '%s_step_%d.candidate' % (self.args.result_path, step)
-        gold_path = '%s_step_%d.gold' % (self.args.result_path, step)
+        can_path = self.args.result_path+"/"+'%s_step_%d.candidate' % (self.args.mode, step)
+        gold_path = self.args.result_path+"/"+'%s_step_%d.gold' % (self.args.mode, step)
         with open(can_path, 'w') as save_pred:
             with open(gold_path, 'w') as save_gold:
                 with torch.no_grad():
@@ -300,7 +300,7 @@ class Trainer(object):
                             pred.append(_pred)
                             pred_idx.append(_pred_idx)
                             gold.append(batch.tgt_str[i])
-                        #print(batch.tgt_str)
+                        # print(batch.tgt_str)
                         # print(pred)
                         for i in range(len(gold)):
                             save_gold.write(gold[i].strip() + '\n')

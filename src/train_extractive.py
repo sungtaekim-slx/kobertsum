@@ -107,7 +107,7 @@ class ErrorHandler(object):
 def validate_ext(args, device_id):
     timestep = 0
     if (args.test_all):
-        cp_files = sorted(glob.glob(os.path.join(args.model_path, 'model_step_*.pt')))
+        cp_files = sorted(glob.glob(os.path.join(args.model_path, args.model_pt)))
         cp_files.sort(key=os.path.getmtime)
         xent_lst = []
         for i, cp in enumerate(cp_files):
@@ -124,7 +124,7 @@ def validate_ext(args, device_id):
             test_ext(args, device_id, cp, step)
     else:
         while (True):
-            cp_files = sorted(glob.glob(os.path.join(args.model_path, 'model_step_*.pt')))
+            cp_files = sorted(glob.glob(os.path.join(args.model_path, args.model_pt)))
             cp_files.sort(key=os.path.getmtime)
             if (cp_files):
                 cp = cp_files[-1]
@@ -182,6 +182,7 @@ def test_ext(args, device_id, pt, step):
         test_from = args.test_from
     logger.info('Loading checkpoint from %s' % test_from)
     checkpoint = torch.load(test_from, map_location=lambda storage, loc: storage)
+    
     opt = vars(checkpoint['opt'])
     for k in opt.keys():
         if (k in model_flags):

@@ -113,15 +113,22 @@ def get_generator(vocab_size, dec_hidden_size, device):
     return generator
 
 class Bert(nn.Module):
-    def __init__(self, model_path, large, temp_dir, finetune=False):
+    # def __init__(self, model_path, save_path, large, temp_dir, finetune=False):
+    def __init__(self, args):
         super(Bert, self).__init__()
         # if(large):
 #         self.model = BertModel.from_pretrained('bert-large-uncased', cache_dir=temp_dir)
         # else:
-        self.model = AutoModel.from_pretrained(model_path, cache_dir=temp_dir)
-        self.finetune = finetune
+        self.model = AutoModel.from_pretrained(args.model_path, cache_dir=args.temp_dir)
+        self.save_path = args.save_path
+
+        if(args.mode == "train"):
+            self.model.save_pretrained(self.save_path)
+
+        self.finetune = args.finetune_bert
     def forward(self, x, segs, mask):
         if(self.finetune):
+            
             top_vec = self.model(input_ids=x, token_type_ids=segs, attention_mask=mask).last_hidden_state
             #print(last_hiddens, last_pooling_hiddens, hiddens)
             #top_vec = hiddens[-1]
@@ -137,7 +144,8 @@ class ExtSummarizer(nn.Module):
         super(ExtSummarizer, self).__init__()
         self.args = args
         self.device = device
-        self.bert = Bert(args.model_path, args.large, args.temp_dir, args.finetune_bert)
+        # self.bert = Bert(args.model_path,args.save_path, args.large, args.temp_dir, args.finetune_bert)
+        self.bert = Bert(args)
 
         self.ext_layer = ExtTransformerEncoder(self.bert.model.config.hidden_size, args.ext_ff_size, args.ext_heads,
                                                args.ext_dropout, args.ext_layers)
@@ -181,7 +189,8 @@ class AbsSummarizer(nn.Module):
         super(AbsSummarizer, self).__init__()
         self.args = args
         self.device = device
-        self.bert = Bert(args.large, args.temp_dir, args.finetune_bert)
+        # self.bert = Bert(args.model_path,args.save_path, args.large, args.temp_dir, args.finetune_bert)
+        self.bert = Bert(args)
 
         if bert_from_extractive is not None:
             self.bert.model.load_state_dict(
