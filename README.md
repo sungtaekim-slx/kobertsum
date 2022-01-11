@@ -54,14 +54,16 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
 1. 데이터 Preprocessing
 
    데이터를 `ext/data/raw` 에 넣어준 후 다음을 실행하여 BERT 입력을 위한 형태로 변환합니다.
-
+   - `model_path`: 모델 경로
    - `n_cpus`: 연산에 이용할 CPU 수
+   - `sample_data`: 데이터 경로
+   - `save_path`: 전처리 데이터 저장 경로
 
     ```
     python preprocess_data.py -model_path monologg/koelectra-base-v3-discriminator -n_cpus 2 -data_path ./sample_data -save_path ./data
     ```
    
-   결과는 `ext/data/bert_data/train_abs` 및  `ext/data/bert_data/valid_abs` 에 저장됩니다.
+   결과는 `/data` 에 저장됩니다.
    
 2. Fine-tuning
 
