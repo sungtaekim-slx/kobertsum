@@ -70,7 +70,8 @@ class Translator(object):
         self.beam_trace = self.dump_beam != ""
         self.beam_accum = None
 
-        tensorboard_log_dir = args.model_path
+        # tensorboard_log_dir = args.model_path
+        tensorboard_log_dir = args.save_path
 
         self.tensorboard_writer = SummaryWriter(tensorboard_log_dir, comment="Unmt")
 

@@ -202,7 +202,9 @@ def createFolder(directory):
 def make_data(args):
     # args.data_path = "../"+args.data_path
     # args.log_path = "../"+args.log_path
+    save_path = args.save_path
     os.makedirs(args.data_path, exist_ok=True)
+    os.makedirs(save_path, exist_ok=True)
     os.makedirs(args.log_path, exist_ok=True)
     # import data
     with open(f'{args.data_path}/{args.train_data_name}', 'r') as json_file:
@@ -232,9 +234,9 @@ def make_data(args):
     test_df = pd.DataFrame(tests)
 
     # save df
-    train_df.to_pickle(f"{args.data_path}/train_df.pickle")
-    valid_df.to_pickle(f"{args.data_path}/valid_df.pickle")
-    test_df.to_pickle(f"{args.data_path}/test_df.pickle")
+    train_df.to_pickle(f"{save_path}/train_df.pickle")
+    valid_df.to_pickle(f"{save_path}/valid_df.pickle")
+    test_df.to_pickle(f"{save_path}/test_df.pickle")
     print(f'train_df({len(train_df)}) is exported')
     print(f'valid_df({len(valid_df)}) is exported')
     print(f'test_df({len(test_df)}) is exported')
@@ -242,13 +244,13 @@ def make_data(args):
 # python make_data.py -make bert -by abs
 # Make bert input file for train and valid from df file
     
-    save_path = args.save_path
+    
     for data_type in ['train', 'valid', 'test']:
-        df = pd.read_pickle(f"{args.data_path}/{data_type}_df.pickle")
+        df = pd.read_pickle(f"{save_path}/{data_type}_df.pickle")
 
         ## make json file
         # 동일한 파일명 존재하면 덮어쓰는게 아니라 ignore됨에 따라 폴더 내 삭제 후 만들어주기
-        json_data_dir = f"{args.data_path}/{data_type}"
+        json_data_dir = f"{save_path}/{data_type}"
         if os.path.exists(json_data_dir):
             os.system(f"rm {json_data_dir}/*")
         else:
@@ -257,20 +259,20 @@ def make_data(args):
         
         
         ## Convert json to bert.pt files
-        bert_data_dir = f"{args.data_path}/{data_type}"
+        bert_data_dir = f"{save_path}/{data_type}"
         # createFolder(bert_data_dir)
         if os.path.exists(bert_data_dir):
             os.system(f"rm {bert_data_dir}/*")
         else:
             os.mkdir(bert_data_dir)
 
-        create_json_files(df, data_type=data_type, path=args.data_path)
+        create_json_files(df, data_type=data_type, path=save_path)
         
         args.dataset= data_type
         args.raw_path = json_data_dir
         
         args.save_path =  f"{save_path}/{data_type}"
-        createFolder(args.save_path)
+        # createFolder(args.save_path)
         init_logger(args.log_path+"/"+args.log_file_name)
     # os.chdir('./src')    
         eval('data_builder.format_to_bert(args)')

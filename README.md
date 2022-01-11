@@ -75,6 +75,7 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
     python train_function.py \
 	-mode train \
 	-model_path monologg/kobert \
+	-save_path mymodel \
 	-data_path ./data/train \
 	-save_checkpoint_steps 1000 \
 	-visible_gpus 0 \
@@ -89,7 +90,7 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
 	-use_interval true
     ```
 
-    결과는  `models` 폴더 내 finetuning이 실행된 시간을 폴더명으로 가진 폴더에 저장됩니다. 
+    결과는  `mymodel` 폴더 내 finetuning이 실행된 시간을 폴더명으로 가진 폴더에 저장됩니다. 
 
 3. Validation
 

@@ -42,8 +42,9 @@ def build_trainer(args, device_id, model, optims,loss):
 
     print('gpu_rank %d' % gpu_rank)
 
-    tensorboard_log_dir = args.model_path
-
+    # tensorboard_log_dir = args.model_path
+    tensorboard_log_dir = args.save_path
+    
     writer = SummaryWriter(tensorboard_log_dir, comment="Unmt")
 
     report_manager = ReportMgr(args.report_every, start_time=-1, tensorboard_writer=writer)
@@ -336,7 +337,8 @@ class Trainer(object):
             'opt': self.args,
             'optims': self.optims,
         }
-        checkpoint_path = os.path.join(self.args.model_path, 'model_step_%d.pt' % step)
+        # checkpoint_path = os.path.join(self.args.model_path, 'model_step_%d.pt' % step)
+        checkpoint_path = os.path.join(self.args.save_path, 'model_step_%d.pt' % step)
         logger.info("Saving checkpoint %s" % checkpoint_path)
         # checkpoint_path = '%s_step_%d.pt' % (FLAGS.model_path, step)
         if (not os.path.exists(checkpoint_path)):

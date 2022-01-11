@@ -309,7 +309,6 @@ class BertData():
 
     def __init__(self, args):
         self.args = args
-        print(args.model_path)
         # self.tokenizer = KoBertTokenizer.from_pretrained("monologg/kobert", do_lower_case=True)
         self.tokenizer = AutoTokenizer.from_pretrained(args.model_path, do_lower_case=True)
 
