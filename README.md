@@ -73,14 +73,14 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
 
     ```
     python main_function.py -mode train \
- -model_path monologg/koelectra-base-v3-discriminator \
- -save_path mymodel \
- -data_path ./data \
- -save_checkpoint_steps 50 \
- -visible_gpus 0 -report_every 50 \
- -ext_dropout 0.1 -max_pos 512 -lr 2e-3 -warmup_steps 100 \
- -batch_size 3000 -accum_count 2 \
- -train_steps 100  -use_interval true
+    -model_path monologg/koelectra-base-v3-discriminator \
+    -save_path mymodel \
+    -data_path ./data \
+    -save_checkpoint_steps 50 \
+    -visible_gpus 0 -report_every 50 \
+    -ext_dropout 0.1 -max_pos 512 -lr 2e-3 -warmup_steps 100 \
+    -batch_size 3000 -accum_count 2 \
+    -train_steps 100  -use_interval true
     ```
 
     결과는  `mymodel` 폴더 내 finetuning이 실행된 시간을 폴더명으로 가진 폴더에 저장됩니다. 
@@ -93,18 +93,18 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
 
    ```
    python main_function.py -mode valid \
- -test_all True \
- -model_path mymodel \
- -model_pt model_step_100.pt \
- -data_path ./data \
- -result_path ./result \
- -log_dir ./logs \
- -test_batch_size 100  -batch_size 3000 \
- -sep_optim true \
- -use_interval true \
- -visible_gpus 0 -max_pos 512 -max_length 200 \
- -alpha 0.95 -min_length 50 \
- -report_rouge False -max_tgt_len 100
+    -test_all True \
+    -model_path mymodel \
+    -model_pt model_step_100.pt \
+    -data_path ./data \
+    -result_path ./result \
+    -log_dir ./logs \
+    -test_batch_size 100  -batch_size 3000 \
+    -sep_optim true \
+    -use_interval true \
+    -visible_gpus 0 -max_pos 512 -max_length 200 \
+    -alpha 0.95 -min_length 50 \
+    -report_rouge False -max_tgt_len 100
    ```
 
    결과는 `ext/logs` 폴더 내 `valid_1209_1236.log` 형태로 저장됩니다.
@@ -119,15 +119,15 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
 
     ```
     python main_function.py -mode test \
- -test_from mymodel/model_step_100.pt \
- -data_path ./data \
- -result_path ./result \
- -log_dir ./logs -test_batch_size 1 -batch_size 3000 \
- -sep_optim true -use_interval true \
- -visible_gpus 0 -max_pos 512 -max_length 200 \
- -alpha 0.95 -min_length 50 \
- -report_rouge False \
- -max_tgt_len 100
+    -test_from mymodel/model_step_100.pt \
+    -data_path ./data \
+    -result_path ./result \
+    -log_dir ./logs -test_batch_size 1 -batch_size 3000 \
+    -sep_optim true -use_interval true \
+    -visible_gpus 0 -max_pos 512 -max_length 200 \
+    -alpha 0.95 -min_length 50 \
+    -report_rouge False \
+    -max_tgt_len 100
     ```
 
 5. Inference & make submission file
