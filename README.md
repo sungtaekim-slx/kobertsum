@@ -44,9 +44,13 @@ BertSum은 BERT 위에 inter-sentence Transformer 2-layers 를 얹은 구조를 
 ## Install
 
 1. 필요 라이브러리 설치
-
+    - docker 환경일 경우
     ```
     sh install.sh
+    ```
+    - docker 환경이 아닐 경우
+    ```
+    python main.py -task install
     ```
 
 ## Usage
